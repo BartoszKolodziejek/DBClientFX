@@ -5,5 +5,7 @@ import org.springframework.data.repository.CrudRepository;
 import com.forex.kolodziejek.client.client.entities.Symbols;
 
 public interface SymbolDao extends CrudRepository<Symbols, Long> {
+	
+	public Symbols findByName(String symbol);
 
 }

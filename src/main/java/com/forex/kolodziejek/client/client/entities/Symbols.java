@@ -2,6 +2,7 @@ package com.forex.kolodziejek.client.client.entities;
 
 import java.util.Set;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
@@ -19,7 +20,8 @@ public class Symbols {
 	  @GeneratedValue(strategy = GenerationType.AUTO)
 	  private long id;
 	@NotNull  
-	private String symbol_name;
+	@Column(name="symbol_name")
+	private String name;
 	
 	@OneToMany(fetch = FetchType.LAZY, mappedBy = "symbolID")
 	private Set<Candles> candles;
@@ -38,14 +40,14 @@ public class Symbols {
 		this.candles = candles;
 	}
 	public String getSymbol_name() {
-		return symbol_name;
+		return name;
 	}
 	public void setSymbol_name(String symbol_name) {
-		this.symbol_name = symbol_name;
+		this.name = symbol_name;
 	}
 	public Symbols(String symbol_name) {
 		super();
-		this.symbol_name = symbol_name;
+		this.name = symbol_name;
 	}
 	public Symbols() {
 		super();

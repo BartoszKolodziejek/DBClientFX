@@ -25,7 +25,9 @@ public class Candles {
 	 private long id;
 	 
 	 @NotNull
-	 private String interval;
+	 @ManyToOne(fetch = FetchType.LAZY)
+		@JoinColumn(name = "interval", nullable = false)
+		 private Interval interval;
 	 
 	 @NotNull
 	 private Date close_date;
@@ -45,10 +47,10 @@ public class Candles {
 	 private BigDecimal open;
 	 @NotNull
 	 private BigDecimal close;
-	public String getInterval() {
+	public Interval getInterval() {
 		return interval;
 	}
-	public void setInterval(String interval) {
+	public void setInterval(Interval interval) {
 		this.interval = interval;
 	}
 	public Date getClose_date() {
@@ -89,7 +91,7 @@ public class Candles {
 	public void setClose(BigDecimal close) {
 		this.close = close;
 	}
-	public Candles(String interval, Date close_date, Symbols symbolID, BigDecimal high, BigDecimal low, BigDecimal open,
+	public Candles(Interval interval, Date close_date, Symbols symbolID, BigDecimal high, BigDecimal low, BigDecimal open,
 			BigDecimal close) {
 		super();
 		this.interval = interval;

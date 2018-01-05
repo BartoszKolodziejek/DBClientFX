@@ -20,6 +20,9 @@ import javax.validation.constraints.NotNull;
 @Table(name = "Users")
 public class User {
 	
+	private boolean enabled = true;
+	
+	
 	 @Id
 	  @GeneratedValue(strategy = GenerationType.AUTO)
 	  private long id;
@@ -71,6 +74,51 @@ public class User {
 	}
 	public void setStrategies(Set<Strategies> strategies) {
 		this.strategies = strategies;
+	}
+	
+	public long getId() {
+		return id;
+	}
+	public void setId(long id) {
+		this.id = id;
+	}
+	public User(String username, String pass, String e_mail) {
+		super();
+		this.username = username;
+		this.pass = pass;
+		this.e_mail = e_mail;
+	}
+	public boolean isEnabled() {
+		return enabled;
+	}
+	public void setEnabled(boolean enabled) {
+		this.enabled = enabled;
+	}
+	public Set<Accounts> getAccounts() {
+		return accounts;
+	}
+	public void setAccounts(Set<Accounts> accounts) {
+		this.accounts = accounts;
+	}
+	public Set<Trades> getTrades() {
+		return trades;
+	}
+	public void setTrades(Set<Trades> trades) {
+		this.trades = trades;
+	}
+	public Set<Results> getResults() {
+		return results;
+	}
+	public void setResults(Set<Results> results) {
+		this.results = results;
+	}
+	public User(String username, String pass) {
+		super();
+		this.username = username;
+		this.pass = pass;
+	}
+	public User() {
+		
 	}
 	 
 	 

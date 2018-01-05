@@ -3,6 +3,7 @@ package com.forex.kolodziejek.client.client.entities;
 
 import java.util.Set;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
@@ -20,7 +21,8 @@ public class Brokers {
 	  @GeneratedValue(strategy = GenerationType.AUTO)
 	  private long id;
 	@NotNull  
-	private String broker_name;
+	@Column(name="borker_name")
+	private String name;
 	
 	
 	@OneToMany(fetch = FetchType.LAZY, mappedBy = "broker")
@@ -29,14 +31,14 @@ public class Brokers {
 	@OneToMany(fetch = FetchType.LAZY, mappedBy = "broker")
 	private Set<Accounts> accounts;
 	public String getBroker_name() {
-		return broker_name;
+		return name;
 	}
 	public void setBroker_name(String broker_name) {
-		this.broker_name = broker_name;
+		this.name = broker_name;
 	}
 	public Brokers(String broker_name) {
 		super();
-		this.broker_name = broker_name;
+		this.name = broker_name;
 	}
 	public Brokers() {
 		super();

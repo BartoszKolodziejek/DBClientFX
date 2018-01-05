@@ -22,6 +22,10 @@ public class Accounts {
 	@Id
 	  @GeneratedValue(strategy = GenerationType.AUTO)
 	  private long id;
+	
+	@NotNull
+	private String name;
+	
 	@NotNull  
 	private BigDecimal lavarage;
 	
@@ -47,6 +51,14 @@ public class Accounts {
 	private Set<Trades> trades;
 	
 	
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
 	public BigDecimal getLavarage() {
 		return lavarage;
 	}
@@ -95,13 +107,18 @@ public class Accounts {
 		this.trades = trades;
 	}
 
-	public Accounts(BigDecimal lavarage, BigDecimal deposit, Brokers broker, User user, Currencies currency) {
+
+
+	public Accounts(String name, BigDecimal lavarage, BigDecimal deposit, Brokers broker, User users,
+			Currencies currencies) {
 		super();
+		this.name = name;
 		this.lavarage = lavarage;
 		this.deposit = deposit;
 		this.broker = broker;
-		this.users = user;
+		this.users = users;
 		this.currency = currency;
+		
 	}
 
 	public Accounts() {

@@ -22,6 +22,9 @@ public class Interval {
 	
 	
 	@OneToMany(fetch = FetchType.LAZY, mappedBy = "interval")
+	private Set<Candles> candles;
+	
+	@OneToMany(fetch = FetchType.LAZY, mappedBy = "interval")
 	private Set<Results> results;
 	
 	@OneToMany(fetch = FetchType.LAZY, mappedBy = "interval")

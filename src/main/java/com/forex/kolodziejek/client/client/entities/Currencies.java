@@ -2,6 +2,7 @@ package com.forex.kolodziejek.client.client.entities;
 
 import java.util.Set;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
@@ -29,7 +30,8 @@ public class Currencies {
 	  @GeneratedValue(strategy = GenerationType.AUTO)
 	  private long id;
 	@NotNull  
-	private String currency_name;
+	@Column(name="currency_name")
+	private String name;
 	public Set<Accounts> getAccounts() {
 		return accounts;
 	}
@@ -37,14 +39,14 @@ public class Currencies {
 		this.accounts = accounts;
 	}
 	public String getCurrency_name() {
-		return currency_name;
+		return name;
 	}
 	public void setCurrency_name(String currency_name) {
-		this.currency_name = currency_name;
+		this.name = currency_name;
 	}
 	public Currencies(String currency_name) {
 		super();
-		this.currency_name = currency_name;
+		this.name = currency_name;
 	}
 	public Currencies() {
 		super();
