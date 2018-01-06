@@ -13,6 +13,7 @@ import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.validation.constraints.NotNull;
 
+
 @Entity
 @Table(name = "Brokers")
 public class Brokers {
@@ -27,6 +28,9 @@ public class Brokers {
 	
 	@OneToMany(fetch = FetchType.LAZY, mappedBy = "broker")
 	private Set<CurrenciesRate> currencyRate;
+	
+	@OneToMany(fetch = FetchType.LAZY, mappedBy = "borker")
+	private Set<Results> results;
 	
 	@OneToMany(fetch = FetchType.LAZY, mappedBy = "broker")
 	private Set<Accounts> accounts;

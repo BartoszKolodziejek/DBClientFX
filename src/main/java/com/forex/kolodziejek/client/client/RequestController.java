@@ -8,6 +8,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.transaction.Transactional;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -24,6 +26,7 @@ import com.forex.kolodziejek.client.client.dao.CandlesDao;
 import com.forex.kolodziejek.client.client.dao.CurrencyDao;
 import com.forex.kolodziejek.client.client.dao.CurrencyRateDao;
 import com.forex.kolodziejek.client.client.dao.IntervalDao;
+import com.forex.kolodziejek.client.client.dao.ResultsDao;
 import com.forex.kolodziejek.client.client.dao.StrategyDao;
 import com.forex.kolodziejek.client.client.dao.SymbolDao;
 import com.forex.kolodziejek.client.client.dao.TradesDao;
@@ -33,6 +36,7 @@ import com.forex.kolodziejek.client.client.entities.Candles;
 import com.forex.kolodziejek.client.client.entities.Currencies;
 import com.forex.kolodziejek.client.client.entities.CurrenciesRate;
 import com.forex.kolodziejek.client.client.entities.Interval;
+import com.forex.kolodziejek.client.client.entities.Results;
 import com.forex.kolodziejek.client.client.entities.Strategies;
 import com.forex.kolodziejek.client.client.entities.Symbols;
 import com.forex.kolodziejek.client.client.entities.Trades;
@@ -44,6 +48,8 @@ import com.forex.kolodziejek.client.client.services.UserService;
 @RestController
 @Transactional 
 public class RequestController {
+	
+	   private static final Logger logger = LogManager.getLogger(ClientApplication.class);
 	
 	@Autowired
 	private SymbolDao symboldao; 
@@ -67,7 +73,33 @@ public class RequestController {
 	private StrategyDao strategyDao;
 	@Autowired
 	private TradesDao tradesDao;
-	
+	@Autowired
+	private ResultsDao resultsDao;
+	 
+	@RequestMapping(value="/insertrusltes", method=RequestMethod.GET)
+	@ResponseBody
+	public boolean insertResultes(@RequestParam String strategy, @RequestParam String symbol, @RequestParam String var, @RequestParam String e_payoff, @RequestParam String date, @RequestParam String borker, @RequestParam String interval) {
+		try {
+			Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+			SimpleDateFormat df = new SimpleDateFormat("dd-MM-yy HH-mm-ss");
+			resultsDao.save(new Results((new BigDecimal(var)),
+					                    (new BigDecimal(e_payoff)),
+					                     df.parse(date),
+					                     intervalDao.findByInterval(interval),
+					                     strategyDao.findByStrategyName(strategy),
+					                     symboldao.findByName(symbol),
+					                     ((User) auth.getPrincipal()),
+					                     brokerDao.findByName(borker)));
+			return true;
+			
+			
+			
+		} catch (Exception e) {
+			logger.error(e.getLocalizedMessage());
+			return false;
+		}
+	}
+	  
 	@RequestMapping(value="/inserttrades", method=RequestMethod.GET)
 	@ResponseBody
 	public boolean insertAccount(@RequestParam String date_open, @RequestParam String strategy, @RequestParam String symbol, @RequestParam String effect, @RequestParam String account, @RequestParam String date_close, @RequestParam String interval ) {
@@ -79,7 +111,7 @@ public class RequestController {
 			return true;
 		}
 		catch(Exception e){
-			System.out.println(e.getMessage());
+			logger.error(e.getLocalizedMessage());
 			return false;
 		}
 	}
@@ -94,7 +126,7 @@ public class RequestController {
 			return true;
 		}
 		catch(Exception e){
-			System.out.println(e.getMessage());
+			logger.error(e.getLocalizedMessage());
 			return false;
 		}
 	}
@@ -117,7 +149,7 @@ public class RequestController {
 			
 		}
 		catch(Exception e){
-			System.out.println(e.getMessage());
+			logger.error(e.getLocalizedMessage());
 			return false;
 			
 		}
@@ -145,7 +177,7 @@ public class RequestController {
 				
 				
 			} catch (Exception e) {
-				System.out.println(e.getMessage());
+				logger.error(e.getLocalizedMessage());
 				return false;
 			}
 			
@@ -162,7 +194,7 @@ public class RequestController {
 			return true;
 			
 		} catch (Exception e) {
-			System.out.println(e.getMessage());
+			logger.error(e.getLocalizedMessage());
 			return false;
 		}
 	}
@@ -176,7 +208,7 @@ public class RequestController {
 			currencyDao.save(new Currencies(name));
 			return true;
 		} catch (Exception e) {
-			System.out.println(e.getMessage());
+			logger.error(e.getLocalizedMessage());
 			return false;
 		}
 		
@@ -191,7 +223,7 @@ public class RequestController {
 			return true;
 		}
 		catch (Exception e) {
-			System.out.println(e.getMessage());
+			logger.error(e.getLocalizedMessage());
 			return false;
 		}
 	}
@@ -212,7 +244,7 @@ public class RequestController {
 		return true;
 		
 	} catch (Exception e) {
-		System.out.println(e.getMessage());
+		logger.error(e.getLocalizedMessage());
 		return false;
 	}
 	
@@ -225,7 +257,7 @@ public class RequestController {
 		try{symboldao.save(new Symbols(symbol));
 		return true;}
 		catch (Exception e) {
-			System.out.println(e.getMessage());
+			logger.error(e.getLocalizedMessage());
 		 return false;
 		}
 	}
@@ -235,7 +267,7 @@ public class RequestController {
 	public boolean login(@RequestParam String username, @RequestParam String pass ) {
     try { securityService.autologin(username, pass);   return true;}
     catch (Exception e) {
-    	System.out.println(e.getMessage());
+    	logger.error(e.getLocalizedMessage());
 return false;	}
 		
 	}

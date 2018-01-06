@@ -50,6 +50,11 @@ public class Results {
 	 @ManyToOne(fetch = FetchType.LAZY)
 	 @JoinColumn(name = "users", nullable = false)
 	private User users;
+	
+	@NotNull
+	 @ManyToOne(fetch = FetchType.LAZY)
+	 @JoinColumn(name = "broker", nullable = false)
+	private Brokers borker;
 
 	public BigDecimal getVar() {
 		return var;
@@ -107,8 +112,18 @@ public class Results {
 		this.users = user;
 	}
 
+	
+
+	public Brokers getBorker() {
+		return borker;
+	}
+
+	public void setBorker(Brokers borker) {
+		this.borker = borker;
+	}
+
 	public Results(BigDecimal var, BigDecimal expected_payoff, Date date, Interval interval, Strategies strategy,
-			Symbols symbol, User user) {
+			Symbols symbol, User users, Brokers borker) {
 		super();
 		this.var = var;
 		this.expected_payoff = expected_payoff;
@@ -116,7 +131,8 @@ public class Results {
 		this.interval = interval;
 		this.strategy = strategy;
 		this.symbol = symbol;
-		this.users = user;
+		this.users = users;
+		this.borker = borker;
 	}
 
 	public Results() {
