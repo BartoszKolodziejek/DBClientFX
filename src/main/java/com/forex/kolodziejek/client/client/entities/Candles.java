@@ -3,6 +3,7 @@ package com.forex.kolodziejek.client.client.entities;
 import java.math.BigDecimal;
 import java.util.Date;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
@@ -39,13 +40,17 @@ public class Candles {
 	 private Symbols symbolID;
 	 
 	 @NotNull
+	 @Column(scale=5, precision=10)
 	 private BigDecimal high;
 	 
 	 @NotNull
+	 @Column(scale=5, precision=10)
 	 private BigDecimal low;
 	 @NotNull
+	 @Column(scale=5, precision=10)
 	 private BigDecimal open;
 	 @NotNull
+	 @Column(scale=5, precision=10)
 	 private BigDecimal close;
 	public Interval getInterval() {
 		return interval;

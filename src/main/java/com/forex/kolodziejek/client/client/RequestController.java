@@ -14,6 +14,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -21,6 +23,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.forex.kolodziejek.client.client.dao.AccountDao;
+import com.forex.kolodziejek.client.client.dao.ActiveTradesDao;
 import com.forex.kolodziejek.client.client.dao.BrokerDao;
 import com.forex.kolodziejek.client.client.dao.CandlesDao;
 import com.forex.kolodziejek.client.client.dao.CurrencyDao;
@@ -31,6 +34,7 @@ import com.forex.kolodziejek.client.client.dao.StrategyDao;
 import com.forex.kolodziejek.client.client.dao.SymbolDao;
 import com.forex.kolodziejek.client.client.dao.TradesDao;
 import com.forex.kolodziejek.client.client.entities.Accounts;
+import com.forex.kolodziejek.client.client.entities.ActiveTrades;
 import com.forex.kolodziejek.client.client.entities.Brokers;
 import com.forex.kolodziejek.client.client.entities.Candles;
 import com.forex.kolodziejek.client.client.entities.Currencies;
@@ -46,7 +50,7 @@ import com.forex.kolodziejek.client.client.services.UserService;
 
 
 @RestController
-@Transactional 
+
 public class RequestController {
 	
 	   private static final Logger logger = LogManager.getLogger(ClientApplication.class);
@@ -75,6 +79,8 @@ public class RequestController {
 	private TradesDao tradesDao;
 	@Autowired
 	private ResultsDao resultsDao;
+	@Autowired
+	private ActiveTradesDao activeTradesDao;
 	 
 	@RequestMapping(value="/insertrusltes", method=RequestMethod.GET)
 	@ResponseBody
@@ -99,10 +105,27 @@ public class RequestController {
 			return false;
 		}
 	}
-	  
+	
+	
+	@RequestMapping(value = "/insertactivetrades", method=RequestMethod.GET)
+	@ResponseBody
+	public boolean insertCurrentTrades(@RequestParam String date_open,  @RequestParam String type, @RequestParam String open_price, @RequestParam String strategy, @RequestParam String symbol, @RequestParam String status, @RequestParam String account, @RequestParam String stoploss, @RequestParam String interval, @RequestParam String stoploss_type ) {
+		try {
+			Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+			User user = (User) authentication.getPrincipal();
+			SimpleDateFormat df = new SimpleDateFormat("dd-MM-yy HH-mm");
+			activeTradesDao.save(new ActiveTrades(df.parse(date_open), new BigDecimal(status), type, new BigDecimal(stoploss), stoploss_type, new BigDecimal(open_price), strategyDao.findByStrategyName(strategy), symboldao.findByName(symbol),user, intervalDao.findByInterval(interval), accountDao.findByName(account)));
+			return true;
+		}
+		catch(Exception e){
+			logger.error(e.getLocalizedMessage());
+			return false;
+		}
+		
+	}
 	@RequestMapping(value="/inserttrades", method=RequestMethod.GET)
 	@ResponseBody
-	public boolean insertAccount(@RequestParam String date_open, @RequestParam String strategy, @RequestParam String symbol, @RequestParam String effect, @RequestParam String account, @RequestParam String date_close, @RequestParam String interval ) {
+	public boolean insertTrades(@RequestParam String date_open,  @RequestParam String strategy, @RequestParam String symbol, @RequestParam String effect, @RequestParam String account, @RequestParam String date_close, @RequestParam String interval ) {
 		try {
 			Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 			User user = (User) authentication.getPrincipal();
@@ -131,6 +154,14 @@ public class RequestController {
 		}
 	}
 	
+	
+	@RequestMapping(value="/closeTrade", method=RequestMethod.GET)
+	@ResponseBody
+	public void closeTrade(@RequestParam String date) {
+		
+		
+		
+	}
 	
 	
 	@RequestMapping(value="/insertaccount", method=RequestMethod.GET)
@@ -228,12 +259,11 @@ public class RequestController {
 		}
 	}
 	
-@RequestMapping(value="/insertcandle", method = RequestMethod.GET)
-	@ResponseBody
-	public boolean insertCandle(@RequestParam String interval, @RequestParam String date, @RequestParam String symbol, @RequestParam String high, @RequestParam String low, @RequestParam String open, @RequestParam String close) {
+@GetMapping(value="/insertcandle")
+	public boolean insertCandle(@RequestParam(value="interval") String interval, @RequestParam(value="date") String date, @RequestParam(value="symbol") String symbol, @RequestParam(value="high") String high, @RequestParam(value="low") String low, @RequestParam(value="open") String open, @RequestParam(value="close") String close) {
 	try {
 		Interval inter= intervalDao.findByInterval(interval);
-		SimpleDateFormat dateformat = new SimpleDateFormat("dd-MM-yy HH-mm");
+		SimpleDateFormat dateformat = new SimpleDateFormat("yyyy.MM.dd-HH:mm:ss");
 		Date date_close = dateformat.parse(date);
 		Symbols sym = symboldao.findByName(symbol);
 		BigDecimal h = new BigDecimal(high);
