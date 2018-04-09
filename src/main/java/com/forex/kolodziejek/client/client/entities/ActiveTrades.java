@@ -3,14 +3,7 @@ package com.forex.kolodziejek.client.client.entities;
 import java.math.BigDecimal;
 import java.util.Date;
 
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
+import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 
 @Entity
@@ -25,18 +18,20 @@ public class ActiveTrades {
 	@NotNull
 	private Date open;
 	@NotNull
+    @Column(scale=5, precision=10)
 	private BigDecimal status;
 	
 	@NotNull
 	private String type;
 	
-	
-	
-	
+	@NotNull
+	private BigDecimal size;
+
+    @Column(scale=5, precision=10)
 	private BigDecimal stoploss;
 	
 	private String stoplosstype;
-	
+    @Column(scale=5, precision=10)
 	private BigDecimal open_price;
 	
 	
@@ -273,7 +268,7 @@ public class ActiveTrades {
 
 	public ActiveTrades(Date open, BigDecimal status, String type, BigDecimal stoploss, String stoplosstype,
 			BigDecimal open_price, Strategies strategy, Symbols symbol, User users, Interval interval,
-			Accounts account) {
+			Accounts account, BigDecimal size) {
 		super();
 		this.open = open;
 		this.status = status;
@@ -286,11 +281,12 @@ public class ActiveTrades {
 		this.users = users;
 		this.interval = interval;
 		this.account = account;
+		this.size = size;
 	}
 
-
-
-
+	public BigDecimal getSize() {
+		return size;
+	}
 
 	public ActiveTrades() {
 		super();

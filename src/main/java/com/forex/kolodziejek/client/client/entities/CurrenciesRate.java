@@ -2,15 +2,10 @@ package com.forex.kolodziejek.client.client.entities;
 
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
+import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 
 @Entity
@@ -20,10 +15,13 @@ public class CurrenciesRate {
 	@Id
 	  @GeneratedValue(strategy = GenerationType.AUTO)
 	  private long id;
-	@NotNull  
+
+	@NotNull
+	@Column(scale=5, precision=10)
 	private BigDecimal rate;
 	
 	@NotNull
+    @Column(unique = true)
 	private Date date;
 	
 	@NotNull
@@ -93,7 +91,17 @@ public class CurrenciesRate {
 	}
 	
 	
-	
+	public Map<String, String> asMap(){
+		Map<String, String> map = new HashMap<>();
+		map.put("rate", this.rate.toString());
+		map.put("date", date.toString());
+		map.put("spread", spread.toString());
+		map.put("broker", broker.getBroker_name());
+		map.put("base", currencyBase.getCurrency_name());
+		map.put("target", currencyBase.getCurrency_name());
+		return map;
+
+	}
 	
 
 }

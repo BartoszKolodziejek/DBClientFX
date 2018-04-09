@@ -1,5 +1,7 @@
 package com.forex.kolodziejek.client.client.entities;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 import javax.persistence.Entity;
@@ -23,9 +25,20 @@ public class Strategies {
 	 
 	 @NotNull
 	 private String strategyName;
-	 
-	 @NotNull
-	 @OneToMany(fetch = FetchType.LAZY, mappedBy = "strategy")
+
+
+	 private String location;
+
+	public void setLocation(String location) {
+		this.location = location;
+	}
+
+	public String getLocation() {
+
+		return location;
+	}
+
+	@OneToMany(fetch = FetchType.LAZY, mappedBy = "strategy")
 		private Set<Results> results;
 	 
 	 @NotNull
@@ -55,19 +68,26 @@ public class Strategies {
 		this.users = user;
 	}
 
-	public Strategies(String strategyName, User user) {
+	public Strategies(String strategyName, User user, String location) {
 		super();
 		this.strategyName = strategyName;
 		this.users = user;
+		this.location = location;
 	}
 
 	public Strategies() {
 		super();
 		
-	} 
-	 
-	 
-	
-	
+	}
 
+	public Map<String, String> asJson(){
+		Map<String,String> json = new HashMap<>();
+		json.put("name", strategyName);
+		json.put("location", location);
+		return json;
+	}
+
+    public long getId() {
+        return id;
+    }
 }

@@ -1,15 +1,27 @@
 package com.forex.kolodziejek.client.client;
 
 import java.math.BigDecimal;
+import java.security.Principal;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.transaction.Transactional;
 
+
+import com.forex.kolodziejek.client.client.dao.*;
+import com.forex.kolodziejek.client.client.services.WebService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -22,17 +34,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.forex.kolodziejek.client.client.dao.AccountDao;
-import com.forex.kolodziejek.client.client.dao.ActiveTradesDao;
-import com.forex.kolodziejek.client.client.dao.BrokerDao;
-import com.forex.kolodziejek.client.client.dao.CandlesDao;
-import com.forex.kolodziejek.client.client.dao.CurrencyDao;
-import com.forex.kolodziejek.client.client.dao.CurrencyRateDao;
-import com.forex.kolodziejek.client.client.dao.IntervalDao;
-import com.forex.kolodziejek.client.client.dao.ResultsDao;
-import com.forex.kolodziejek.client.client.dao.StrategyDao;
-import com.forex.kolodziejek.client.client.dao.SymbolDao;
-import com.forex.kolodziejek.client.client.dao.TradesDao;
 import com.forex.kolodziejek.client.client.entities.Accounts;
 import com.forex.kolodziejek.client.client.entities.ActiveTrades;
 import com.forex.kolodziejek.client.client.entities.Brokers;
@@ -81,20 +82,111 @@ public class RequestController {
 	private ResultsDao resultsDao;
 	@Autowired
 	private ActiveTradesDao activeTradesDao;
+	@Autowired
+	private WebService webService;
+	@Autowired
+    private UserDao userDao;
+
+
+	@RequestMapping(value = "/getrate", method = RequestMethod.GET)
+	public Map<String, String> getRate(@RequestParam  String date, @RequestParam String base, @RequestParam String target){
+		SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd-MM-yyyy-HH-mm");
+		try {
+			CurrenciesRate  currenciesRate = currencyRateDao.findByCurrencyBaseAndCurrencyTargetAndDate(currencyDao.findByName(base), currencyDao.findByName(target), simpleDateFormat.parse(date));
+			return currenciesRate.asMap();
+		} catch (ParseException e) {
+			e.printStackTrace();
+			return new HashMap<>();
+		}
+	}
+
+	@RequestMapping(value = "/get_all_strategies")
+    public Map<String, Map<String, String>> getAllStrategies(){
+	    List<Strategies> strategies = (List<Strategies>) strategyDao.findAll();
+        Map<String, Map<String, String>> resuts= new HashMap<>();
+        strategies.forEach(s -> resuts.put(String.valueOf(s.getId()), s.asJson()));
+        return resuts;
+    }
+
+	@RequestMapping(value = "/get_all_symbols", method = RequestMethod.GET)
+    public Map<String, String> getAllSymbols(){
+	    List<Symbols> symbols = (List<Symbols>) symboldao.findAll();
+	    Map<String, String> resuts= new HashMap<>();
+	    symbols.forEach(s -> resuts.put(String.valueOf(s.getId()), s.getSymbol_name()));
+	    return resuts;
+    }
+
+	@RequestMapping(value = "/get_account", method = RequestMethod.GET)
+	public Map<String, String> getAccount(@RequestParam String name){
+		Accounts account = accountDao.findByName(name);
+		return account.asMap();
+	}
+
+	@RequestMapping(value = "/closeAll", method = RequestMethod.GET)
+    public void closeAll( @RequestParam String close){
+	    List<ActiveTrades> activeTrades = (List<ActiveTrades>) activeTradesDao.findAll();
+	    activeTrades.forEach(at -> { close(at, close);});
+    }
+
+    @RequestMapping(value = "/updatestoploss", method = RequestMethod.GET)
+    public void updateStopLoss(@RequestParam String date, @RequestParam String stoploss, @RequestParam String stoplosstype){
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd-MM-yyyy-HH:mm:ss:S");
+        try {
+            ActiveTrades activeTrades = activeTradesDao.getByOpen(simpleDateFormat.parse(date));
+            activeTrades.setStoploss(new BigDecimal(stoploss));
+            activeTrades.setStoplosstype(stoplosstype);
+            activeTradesDao.save(activeTrades);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+	@RequestMapping(value = "/update", method = RequestMethod.GET)
+	public void updateTrade(@RequestParam String date, @RequestParam String result){
+	    SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd-MM-yyyy-HH:mm:ss:S");
+        try {
+            ActiveTrades activeTrades = activeTradesDao.getByOpen(simpleDateFormat.parse(date));
+            activeTrades.setStatus(new BigDecimal(result));
+            activeTradesDao.save(activeTrades);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+
+    }
 	 
+	
+	@RequestMapping(value="/getcandles", method=RequestMethod.GET)
+	@ResponseBody
+	public Map<Integer, String> getcandles(@RequestParam String start, @RequestParam String end, @RequestParam String symbol, @RequestParam String interval){
+	SimpleDateFormat df = new SimpleDateFormat("dd-MM-yyyy-HH:mm");
+	try {
+		List<Candles> candles = candlesDao.findAllByDateBetweenAndSymbolIDAndIntervalOrderByDateAsc(df.parse(start), df.parse(end), symboldao.findByName(symbol), intervalDao.findByInterval(interval));
+		Map<Integer, String> candlesJson = new HashMap<>();
+		candles.forEach((c) -> {  candlesJson.put(new Integer(candles.indexOf(c)) , c.toString()); }  );
+		Map<Integer, String> newMapSortedByKey = candlesJson.entrySet().stream().sorted(Map.Entry.<Integer,String>comparingByKey())
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
+		return newMapSortedByKey;
+	} catch (ParseException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	}
+	return null;
+	}
+	
 	@RequestMapping(value="/insertrusltes", method=RequestMethod.GET)
 	@ResponseBody
 	public boolean insertResultes(@RequestParam String strategy, @RequestParam String symbol, @RequestParam String var, @RequestParam String e_payoff, @RequestParam String date, @RequestParam String borker, @RequestParam String interval) {
 		try {
 			Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-			SimpleDateFormat df = new SimpleDateFormat("dd-MM-yy HH-mm-ss");
+			SimpleDateFormat df = new SimpleDateFormat("dd-MM-yyyy HH-mm-ss");
 			resultsDao.save(new Results((new BigDecimal(var)),
 					                    (new BigDecimal(e_payoff)),
 					                     df.parse(date),
 					                     intervalDao.findByInterval(interval),
 					                     strategyDao.findByStrategyName(strategy),
 					                     symboldao.findByName(symbol),
-					                     ((User) auth.getPrincipal()),
+					                     getLoggedIn(),
 					                     brokerDao.findByName(borker)));
 			return true;
 			
@@ -105,16 +197,16 @@ public class RequestController {
 			return false;
 		}
 	}
-	
-	
+
 	@RequestMapping(value = "/insertactivetrades", method=RequestMethod.GET)
 	@ResponseBody
-	public boolean insertCurrentTrades(@RequestParam String date_open,  @RequestParam String type, @RequestParam String open_price, @RequestParam String strategy, @RequestParam String symbol, @RequestParam String status, @RequestParam String account, @RequestParam String stoploss, @RequestParam String interval, @RequestParam String stoploss_type ) {
+	public boolean insertCurrentTrades(@RequestParam String date_open,  @RequestParam String type, @RequestParam String open_price, @RequestParam String strategy, @RequestParam String symbol, @RequestParam String status, @RequestParam String account, @RequestParam String stoploss, @RequestParam String interval, @RequestParam String stoploss_type, @RequestParam String size ) {
+
 		try {
 			Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-			User user = (User) authentication.getPrincipal();
-			SimpleDateFormat df = new SimpleDateFormat("dd-MM-yy HH-mm");
-			activeTradesDao.save(new ActiveTrades(df.parse(date_open), new BigDecimal(status), type, new BigDecimal(stoploss), stoploss_type, new BigDecimal(open_price), strategyDao.findByStrategyName(strategy), symboldao.findByName(symbol),user, intervalDao.findByInterval(interval), accountDao.findByName(account)));
+			User user = userService.findByUsername("test");
+			SimpleDateFormat df = new SimpleDateFormat("dd-MM-yyyy-HH-mm");
+			activeTradesDao.save(new ActiveTrades(df.parse(date_open), new BigDecimal(status), type, new BigDecimal(stoploss), stoploss_type, new BigDecimal(open_price), strategyDao.findByStrategyName(strategy), symboldao.findByName(symbol),user, intervalDao.findByInterval(interval), accountDao.findByName(account), new BigDecimal(size)));
 			return true;
 		}
 		catch(Exception e){
@@ -127,9 +219,9 @@ public class RequestController {
 	@ResponseBody
 	public boolean insertTrades(@RequestParam String date_open,  @RequestParam String strategy, @RequestParam String symbol, @RequestParam String effect, @RequestParam String account, @RequestParam String date_close, @RequestParam String interval ) {
 		try {
-			Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-			User user = (User) authentication.getPrincipal();
-			SimpleDateFormat df = new SimpleDateFormat("dd-MM-yy HH-mm");
+
+			User user = getLoggedIn();
+			SimpleDateFormat df = new SimpleDateFormat("dd-MM-yyyy-HH-mm");
 			tradesDao.save(new Trades((new BigDecimal(effect)),df.parse(date_open),df.parse(date_close),strategyDao.findByStrategyName(strategy), symboldao.findByName(symbol),user, intervalDao.findByInterval(interval),accountDao.findByName(account)));
 			return true;
 		}
@@ -141,11 +233,11 @@ public class RequestController {
 	
 	@RequestMapping(value="/insertstrategy", method=RequestMethod.GET)
 	@ResponseBody
-	public boolean insertAccount(@RequestParam String strategyName) {
+	public boolean insertStrategy(@RequestParam String strategyName, @RequestParam String location) {
 		try {
-			Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-			User user = (User) authentication.getPrincipal();
-			strategyDao.save(new Strategies(strategyName,user));
+			User user = getLoggedIn();
+			User users = userDao.findByUsername(user.getUsername());
+			strategyDao.save(new Strategies(strategyName,users, location));
 			return true;
 		}
 		catch(Exception e){
@@ -157,10 +249,15 @@ public class RequestController {
 	
 	@RequestMapping(value="/closeTrade", method=RequestMethod.GET)
 	@ResponseBody
-	public void closeTrade(@RequestParam String date) {
-		
-		
-		
+	public void closeTrade(@RequestParam String date, @RequestParam String strategyName, @RequestParam String closeDate) {
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd-MM-yyyy-HH-mm");
+		try {
+			ActiveTrades activeTrade = activeTradesDao.getByOpenAndStrategy(simpleDateFormat.parse(date), strategyDao.findByStrategyName(strategyName));
+			close(activeTrade, closeDate);
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
+
 	}
 	
 	
@@ -171,10 +268,9 @@ public class RequestController {
 			BigDecimal lav = new BigDecimal(lavarage);
 			BigDecimal dep = new BigDecimal(deposit);
 			Currencies cur = currencyDao.findByName(currency);
-			Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-			User user = (User) authentication.getPrincipal();
+
 			Brokers brok = brokerDao.findByName(broker);
-			accountDao.save(new Accounts(name, lav, dep, brok, user, cur ));
+			accountDao.save(new Accounts(name, lav, dep, brok, userService.findByUsername("test"), cur ));
 			return true;
 			
 			
@@ -189,23 +285,20 @@ public class RequestController {
 	
 	@RequestMapping(value="/insertrate", method=RequestMethod.GET)
 	@ResponseBody
-	public boolean insertRate(@RequestParam String broker, @RequestParam String base, @RequestParam String target, @RequestParam String rate, @RequestParam String date) {
+	public boolean insertRate(@RequestParam String base, @RequestParam String target, @RequestParam String rate, @RequestParam String date, @RequestParam String account) {
 		if (base.equals(target))
 			return false;
 		else {
 			try {
-				Brokers borokers = brokerDao.findByName(broker);
+				Brokers borokers = accountDao.findByName(account).getBroker();
 				Currencies baseCur = currencyDao.findByName(base);
 				Currencies targetCur = currencyDao.findByName(target);
 				BigDecimal curRate = new BigDecimal(rate);
-				SimpleDateFormat df = new SimpleDateFormat("dd-MM-yy HH-mm");
+				SimpleDateFormat df = new SimpleDateFormat("yyyy.MM.dd-HH:mm:ss");
 				Date rateDate = df.parse(date);
-				currencyRateDao.save(new CurrenciesRate(curRate, rateDate, curRate, borokers, baseCur, targetCur));
+				currencyRateDao.save(new CurrenciesRate(curRate, rateDate, new BigDecimal(0), borokers, baseCur, targetCur));
 				return true;
-				
-				
-				
-				
+
 				
 			} catch (Exception e) {
 				logger.error(e.getLocalizedMessage());
@@ -279,12 +372,30 @@ public class RequestController {
 	}
 	
 }
+
+    @RequestMapping(value = "/getdata", method = RequestMethod.GET)
+	public Map<String, String> getData (@RequestParam String symbol, @RequestParam String strategy){
+		SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy-HH:mm:ss");
+
+		List<Trades> trades = tradesDao.findAllByStrategyAndSymbol( strategyDao.findByStrategyName(strategy),symboldao.findByName(symbol));
+		Map<String, String> results = new HashMap<>();
+		trades.forEach(trade -> results.put(dateFormat.format(trade.getOpen()), trade.getEffect().toString()));
+		return results;
+	}
+
+	@RequestMapping(value = "/getpoint", method = RequestMethod.GET)
+	@ResponseBody
+	public Map<String, String> getPoint(@RequestParam String symbol){
+		Map<String,String> result = new HashMap<>();
+		result.put("point",symboldao.findByName(symbol).getPoint().toString() );
+		return result;
+	}
 	
 	
 	@RequestMapping(value="/insertsymbol", method = RequestMethod.GET)
 	@ResponseBody
-	public boolean insertSymbol(@RequestParam String symbol) {
-		try{symboldao.save(new Symbols(symbol));
+	public boolean insertSymbol(@RequestParam String symbol, @RequestParam String point) {
+		try{symboldao.save(new Symbols(symbol, new BigDecimal(point)));
 		return true;}
 		catch (Exception e) {
 			logger.error(e.getLocalizedMessage());
@@ -329,6 +440,32 @@ try {
 		        new SecurityContextLogoutHandler().logout(request, response, auth);
 		    }
 		return "redirect:/login?logout";
+	}
+    private User getLoggedIn() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return userService.findByUsername (((org.springframework.security.core.userdetails.User) authentication.getPrincipal()).getUsername());
+    }
+
+
+    private void close(ActiveTrades activeTrade, String closeDate){
+		try{
+		SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd-MM-yyyy-HH-mm");
+		Accounts account=activeTrade.getAccount();
+		Map<String,String> params = new HashMap<>();
+		params.put("before", account.getDeposit().toString());
+		params.put("status", activeTrade.getStatus().toString());
+		JSONObject jsonObject = webService.getJson("http://localhost:2137", params, "getaccountresult");
+		account.setDeposit(new BigDecimal((String) jsonObject.get("balance")));
+		tradesDao.save(new Trades(new BigDecimal((String) jsonObject.get("effect")),activeTrade.getOpen(), simpleDateFormat.parse(closeDate), activeTrade.getStrategy(), activeTrade.getSymbol(), activeTrade.getUsers(), activeTrade.getInterval(), activeTrade.getAccount()));
+		activeTradesDao.delete(activeTrade);
+		} catch (ParseException e) {
+			logger.debug(e.getMessage());
+			e.printStackTrace();
+		} catch (JSONException e) {
+			logger.debug(e.getMessage());
+			e.printStackTrace();
+		}
+
 	}
 
 }

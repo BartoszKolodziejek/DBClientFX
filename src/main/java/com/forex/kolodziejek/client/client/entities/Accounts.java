@@ -1,6 +1,8 @@
 package com.forex.kolodziejek.client.client.entities;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 import javax.persistence.Entity;
@@ -117,13 +119,22 @@ public class Accounts {
 		this.deposit = deposit;
 		this.broker = broker;
 		this.users = users;
-		this.currency = currency;
+		this.currency = currencies;
 		
 	}
 
 	public Accounts() {
 		super();
 
+	}
+
+	public Map<String, String> asMap(){
+		Map<String,String> map = new HashMap<>();
+		map.put("name", this.name);
+		map.put("lavarage", this.lavarage.toString());
+		map.put("deposit", this.deposit.toString());
+		map.put("currency", this.currency.getCurrency_name());
+		return map;
 	}
 	
 	

@@ -1,5 +1,6 @@
 package com.forex.kolodziejek.client.client.entities;
 
+import java.math.BigDecimal;
 import java.util.Set;
 
 import javax.persistence.Column;
@@ -31,9 +32,19 @@ public class Symbols {
 	
 	@OneToMany(fetch = FetchType.LAZY, mappedBy = "symbol")
 	private Set<Trades> trades;
-	
-	
-	public Set<Candles> getCandles() {
+	@NotNull
+	@Column(scale=5, precision=10)
+	private BigDecimal point;
+
+	public BigDecimal getPoint() {
+		return point;
+	}
+
+    public long getId() {
+        return id;
+    }
+
+    public Set<Candles> getCandles() {
 		return candles;
 	}
 	public void setCandles(Set<Candles> candles) {
@@ -45,9 +56,10 @@ public class Symbols {
 	public void setSymbol_name(String symbol_name) {
 		this.name = symbol_name;
 	}
-	public Symbols(String symbol_name) {
+	public Symbols(String symbol_name, BigDecimal point) {
 		super();
 		this.name = symbol_name;
+		this.point = point;
 	}
 	public Symbols() {
 		super();

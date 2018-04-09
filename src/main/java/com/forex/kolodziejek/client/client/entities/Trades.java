@@ -3,14 +3,7 @@ package com.forex.kolodziejek.client.client.entities;
 import java.math.BigDecimal;
 import java.util.Date;
 
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
+import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 
 @Entity
@@ -20,7 +13,8 @@ public class Trades {
 	@Id
 	  @GeneratedValue(strategy = GenerationType.AUTO)
 	  private long id;
-	@NotNull  
+	@NotNull
+	@Column(scale=5, precision=10)
 	private BigDecimal effect;
 	
 	@NotNull

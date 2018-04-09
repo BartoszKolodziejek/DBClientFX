@@ -20,6 +20,7 @@ import javax.validation.constraints.NotNull;
 @Table(name = "Candles")
 public class Candles {
 	
+	
 
 	 @Id
 	 @GeneratedValue(strategy = GenerationType.AUTO)
@@ -31,7 +32,7 @@ public class Candles {
 		 private Interval interval;
 	 
 	 @NotNull
-	 private Date close_date;
+	 private Date date;
 	 
 	 
 	 @NotNull
@@ -58,11 +59,11 @@ public class Candles {
 	public void setInterval(Interval interval) {
 		this.interval = interval;
 	}
-	public Date getClose_date() {
-		return close_date;
+	public Date getDate() {
+		return date;
 	}
-	public void setClose_date(Date close_date) {
-		this.close_date = close_date;
+	public void setDate(Date close_date) {
+		this.date = close_date;
 	}
 	
 	
@@ -100,7 +101,7 @@ public class Candles {
 			BigDecimal close) {
 		super();
 		this.interval = interval;
-		this.close_date = close_date;
+		this.date = close_date;
 		this.symbolID = symbolID;
 		this.high = high;
 		this.low = low;
@@ -114,7 +115,11 @@ public class Candles {
 	 
 	 
 	 
-	 
+	@Override
+	public String toString() {
+		String info =  "{ \"id\":\""+Long.toString(id)+ "\",\"interval\":\"" + interval.getInterval() + "\",\"date\":\"" + date.toString() + "\",\"symol\":\""+  symbolID.getSymbol_name() + "\",\"high\":\"" + high.toString() +  "\",\"low\":\""+ low.toString() +  "\",\"open\":\""+open.toString() + "\",\"close\":\"" + close.toString() +"\"}";
+		return info;
+	}
 	 
 	 
 	 
